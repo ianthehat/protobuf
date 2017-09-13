@@ -1,0 +1,54 @@
+load("@io_bazel_rules_go//go:def.bzl", "go_prefix", "gazelle")
+load('@io_bazel_rules_go//proto:toolchain.bzl', 'go_proto_toolchain')
+
+# gazelle:exclude test
+
+go_prefix("github.com/gogo/protobuf")
+gazelle(
+    name = "gazelle",
+    prefix = "github.com/gogo/protobuf",
+)
+
+plugins = [
+    "combo",
+    "gofast",
+    "gogo",
+    "gogofast",
+    "gogofaster",
+    "gogoslick",
+    "gogotypes",
+    "gostring",
+]
+
+[[
+    go_proto_toolchain(
+        name = plugin+"_impl",
+        deps = [],
+        plugin = "//protoc-gen-" + plugin,
+        visibility = ["//visibility:public"],
+    ),
+
+    toolchain(
+        name = plugin,
+        toolchain_type = "@io_bazel_rules_go//proto:go_proto",
+        exec_compatible_with = [],
+        target_compatible_with = [],
+        toolchain = "//:"+plugin+"_impl",
+    ),
+
+    go_proto_toolchain(
+        name = plugin+"_grpc_impl",
+        deps = [],
+        plugin = "//protoc-gen-" + plugin,
+        options = ["plugins=grpc"],
+        visibility = ["//visibility:public"],
+    ),
+
+    toolchain(
+        name = plugin+"_grpc",
+        toolchain_type = "@io_bazel_rules_go//proto:go_grpc",
+        exec_compatible_with = [],
+        target_compatible_with = [],
+        toolchain = "//:"+plugin+"_grpc_impl",
+    ),
+ ] for plugin in plugins]
